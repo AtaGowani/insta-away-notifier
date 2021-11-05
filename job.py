@@ -3,6 +3,7 @@ import os
 from selenium import webdriver
 from time import sleep
 from dotenv import load_dotenv
+from selenium.common.exceptions import NoSuchElementException
 
 load_dotenv()
 
@@ -10,6 +11,7 @@ MESSAGE = os.getenv("MESSAGE")
 USERNAME = os.getenv("USERNAME")
 PASSWORD = os.getenv("PASSWORD")
 SHOULD_RUN = os.getenv("SHOULD_RUN")
+
 
 def check_unread_and_notify():
     firefox_options = webdriver.FirefoxOptions()
@@ -31,30 +33,35 @@ def check_unread_and_notify():
     button = driver.find_element("xpath", "//button[@type='submit']")
     button.click()
 
-    # Don't save the password
-    button = driver.find_element(
-        "xpath", "//button[contains(text(), 'Not Now')]")
-    button.click()
+    try:
+        button = driver.find_element(
+            "xpath", "//button[contains(text(), 'Not Now')]")
+        button.click()
+    except NoSuchElementException as e:
+        print("Save password prompt not detected", e)
 
-    # Don't turn on notifications
-    button = driver.find_element(
-        "xpath", "//button[contains(text(), 'Not Now')]")
-    button.click()
-    print("Instagram opened...")
+    try:
+        button = driver.find_element(
+            "xpath", "//button[contains(text(), 'Not Now')]")
+        button.click()
+    except NoSuchElementException as e:
+        print("Notifications prompt not detected", e)
 
     links = driver.find_elements("tag name", "a")
+    print("Opening messages tab...")
     click_messages_tab(links)
     time.sleep(5)  # Wait for messages to load
 
     messages = driver.find_elements(
         "xpath", "//div[contains(@aria-label, 'Unread')]")
     if messages:
+        print("Responding to messages...")
         respond_to_unread(messages, driver)
     else:
-        print("No unread messages found.")
+        print("No unread messages found...")
 
     driver.close()
-    print("Done")
+    print("Done.")
 
 
 def respond_to_unread(messages, driver):
@@ -72,8 +79,8 @@ def respond_to_unread(messages, driver):
 
             messages = driver.find_elements(
                 "xpath", "//div[contains(@aria-label, 'Unread')]")
-        except BaseException as err:
-            print("Unexpected" + err + " " + type(err))
+        except BaseException as e:
+            print("Unexpected" + e + " " + type(e))
 
 
 def click_messages_tab(tab_links):
@@ -85,6 +92,7 @@ def click_messages_tab(tab_links):
         except BaseException as err:
             print("Unexpected" + err + " " + type(err))
             print("Direct messages opened...")
+
 
 if SHOULD_RUN:
     check_unread_and_notify()
