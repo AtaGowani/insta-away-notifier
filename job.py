@@ -94,5 +94,8 @@ def click_messages_tab(tab_links):
             print("Direct messages opened...")
 
 
-if SHOULD_RUN:
+if SHOULD_RUN == True:
+    print("Starting job...")
     check_unread_and_notify()
+else:
+    print("Config disabled. Not running job.")
